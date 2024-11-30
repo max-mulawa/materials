@@ -1,0 +1,10 @@
+--DROP DATABASE IF EXISTS msg;
+CREATE DATABASE msg;
+
+\connect msg;
+
+CREATE TABLE IF NOT EXISTS "messages" (
+    id INT PRIMARY KEY NOT NULL,
+    title VARCHAR(1024) NOT NULL,
+    description TEXT NOT NULL
+)
