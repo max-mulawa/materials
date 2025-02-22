@@ -1,0 +1,9 @@
+global:
+  postgresql:
+    auth:
+      existingSecret: pg-auth
+      username: "myuser"
+      database: "msg"
+primary:
+  initdb:
+    scriptsConfigMap: pg-init-script
