@@ -4,6 +4,7 @@ metadata:
   name: {{ include "go-app.fullname" . }}
   labels:
     {{- include "go-app.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -43,8 +44,13 @@ spec:
               value: "{{ .Values.db.host }}"
             - name: "DB_USER"
               value: "{{ .Values.db.user }}"
+            {{- if .Values.db.password.enabled }}
+            - name: "DB_PASSWORD"
+              value: "{{ .Values.db.password.value }}"
+            {{- else }}
             - name: "DB_PASSWORD_FILE"
               value: "{{ .Values.db.passwordPath }}/password"
+            {{- end }}
             - name: "DB_NAME"
               value: "{{ .Values.db.name }}"
           ports:
@@ -63,9 +69,6 @@ spec:
           {{- end }}
       {{- with .Values.volumes }}
       volumes:
-        - name: pg-password
-          secret:
-            secretName: pg-auth
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}

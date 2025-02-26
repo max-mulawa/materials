@@ -1,0 +1,4 @@
+db:
+  password:
+    enabled: true
+    value: "mypass"

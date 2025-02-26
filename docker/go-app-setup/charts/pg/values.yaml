@@ -1,9 +1,10 @@
+# using global prefix makes it available also to all subcharts
 global:
-  postgresql:
-    auth:
-      existingSecret: pg-auth
-      username: "myuser"
-      database: "msg"
+   postgresql:
+      auth:
+        existingSecret: pg-auth
+        username: "myuser"
+        database: "msg"
 primary:
   initdb:
     scriptsConfigMap: pg-init-script
