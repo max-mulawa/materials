@@ -15,6 +15,7 @@ import (
 	"api.com/quick/pkg/storage/pg"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -56,7 +57,9 @@ func main() {
 	dbPort := Getenv("DB_PORT", DefaultDBPort)
 
 	var storage stg.Storage
-	storage, err := pg.New(fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, dbPort, DefaultDBName))
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, dbPort, DefaultDBName)
+	slog.Info("conn string", "connString", connString)
+	storage, err := pg.New(connString)
 	if err != nil {
 		slog.Error("storage init failed", "err", err)
 	}
@@ -130,7 +133,7 @@ func main() {
 		requestTotal.WithLabelValues("messages", "POST", strconv.Itoa(http.StatusCreated)).Inc()
 	})
 
-	//	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("GET /messages/{id}", func(w http.ResponseWriter, r *http.Request) {
 		val := r.PathValue("id")
@@ -172,7 +175,8 @@ func main() {
 		requestTotal.WithLabelValues("messages/{id}", "GET", strconv.Itoa(http.StatusOK)).Inc()
 	})
 
-	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	// exact match to /
+	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
 

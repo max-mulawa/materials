@@ -1,0 +1,57 @@
+services:
+  postgres:
+    # https://hub.docker.com/_/postgres docker image
+    image: postgres
+    # The healthcheck attribute declares a check that's run to determine whether or not the service containers are "healthy"
+    healthcheck:
+      # pg_isready returns 0 to the shell if the server is accepting connections normally
+      # Using CMD-SHELL runs the command configured as a string using the container's default shell (
+      test: ["CMD-SHELL", "pg_isready -U api -d msg"]
+      interval: 2s
+      retries: 5
+      start_period: 2s
+      timeout: 2s
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./messages.sql:/docker-entrypoint-initdb.d/messages.sql
+    secrets:
+      - db-password
+    # array syntax
+    environment:
+      # - POSTGRES_PASSWORD=mypass
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+      - POSTGRES_USER=api
+  api:
+    image: go-app:v0504
+    # with docker compose watch will will rebuild and update the container
+    build: .
+    develop:
+      watch:
+        - action: rebuild
+          path: ./cmd/
+        - action: rebuild
+          path: ./pkg
+    # With the depends_on attribute, you can control the order of service startup and shutdown
+    depends_on:
+      postgres:
+        condition: service_healthy # passes healthcheck, not just started
+    ports:
+      - 8080:8080
+    secrets:
+      - db-password
+    # map syntax
+    environment:
+      DB_USER: api
+      # DB_PASSWORD: mypass
+      DB_PASSWORD_FILE: /run/secrets/db-password
+      DB_HOST: postgres
+      DB_PORT: "5432"
+volumes:
+  db-data:
+secrets:
+  db-password:
+    # can also be populated from env variable
+    # https://docs.docker.com/compose/how-tos/use-secrets/
+    file: db-password.txt
